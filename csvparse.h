@@ -10,6 +10,5 @@
 #define EOS '\0'
 
 #define OPTION_NONE (0x00)
-#define OPTION_WORD (0x01)
-#define OPTION_COLUMN (0x02)
-#define OPTION_LINE (0x04)
+#define OPTION_FILTER (0x01)
+#define OPTION_HELP (0xFF)

@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -O2
 BINFILE = csvparse
-SRC = csvparse.h csvparse.c debugger.c debugger.h
+SRC = csvparse.c debugger.c command_option.c
 csvparse:
 	$(CC) $(CFLAGS) -o $(BINFILE) $(SRC)
 debug:

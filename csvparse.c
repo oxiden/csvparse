@@ -1,26 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> /* for strcmp */
 #include <sys/stat.h> /* for stat */
-#include <unistd.h>
+#include <unistd.h> /* close */
 #include <fcntl.h> /* for open(2) */
-#include <sys/mman.h>
+#include <sys/mman.h> /* mmap/munmap */
 
 #include "csvparse.h"
 #include "debugger.h"
-
-/* CRLF char? */
-int is_eol(const char const* p) {
- if (*p == CR_C && *(p+1) == LF_C) {
-			printf_debug("\tdetect EOL\n");
-			return CRLF;
-	}
- return NORMAL_CHAR;
-}
+#include "command_option.h"
 
 void print_usage(const char const* self) {
 	printf("Usage: %s [options] file [file...]\n", self);
-	printf("    -l, --line                       count lines\n");
+	printf("    -f, --filter                     filter mode\n");
 	printf("    -h, --help                       print this message\n");
 }
 
@@ -32,7 +23,7 @@ int get_file_size(const char* filename, size_t* filesize) {
 	printf_debug("filesize=%ld\n", filestat.st_size);
 	*filesize = filestat.st_size;
 	return filestat.st_size;
-}	
+}
 void parse_csv(const char* filename) {
 	// open file fd
 	int fd;
@@ -94,7 +85,6 @@ void parse_csv(const char* filename) {
 		}
 	}
 
-
 	// cleanup
 	munmap(p_sof, filesize);
 	close(fd);
@@ -102,77 +92,31 @@ void parse_csv(const char* filename) {
 }
 
 int main(int argc, char *argv[]) {
-	int options = OPTION_NONE;
-	int target_file_no = 0;
-  int double_hyphen = FALSE;
-
-	int data_from_stdin = FALSE;
-
-	int i;
-	// parse comand line
-	for(i = 1; i < argc; i++){
-		printf_debug("[%d]: %s\n", i, argv[i]);
-		if (!double_hyphen && strncmp(argv[i], "-", 1) == 0) {
-			if (strncmp(argv[i] + 1, "-", 1) == 0) {
-				// long option
-				if (strcmp(argv[i] + 2, "word") == 0) {
-					options |= OPTION_WORD;
-				}
-				if (strcmp(argv[i] + 2, "column") == 0) {
-					options |= OPTION_COLUMN;
-				}
-				if (strcmp(argv[i] + 2, "line") == 0) {
-					options |= OPTION_LINE;
-				}
-				if (strcmp(argv[i] + 2, "help") == 0) {
-					print_usage(argv[0]);
-					exit(0);
-				}
-				if (strcmp(argv[i] + 2, "") == 0) {
-					double_hyphen = TRUE;
-					printf_debug("detect double-pyphen\n");
-				}
-			} else {
-				// short option
-				if (strcmp(argv[i] + 1, "w") == 0) {
-					options |= OPTION_WORD;
-				}
-				if (strcmp(argv[i] + 1, "c") == 0) {
-					options |= OPTION_COLUMN;
-				}
-				if (strcmp(argv[i] + 1, "l") == 0) {
-					options |= OPTION_LINE;
-				}
-				if (strcmp(argv[i] + 1, "h") == 0) {
-					print_usage(argv[0]);
-					exit(0);
-				}
-			}
-			if (!double_hyphen && options == OPTION_NONE) {
-				print_usage(argv[0]);
-				exit(0);
-			}
-		} else {
-			printf_debug("target=[%s]\n", argv[i]);
-			if (target_file_no == 0) {
-				target_file_no = i;
-			}
-		}
+	// parse command-line option
+	COMMAND_OPTION opt;
+	if (parse_command_option(argc, argv, &opt) == -1) {
+		perror("command parser error.");
+		return 1;
+	}
+	if (opt.options == OPTION_HELP) {
+		print_usage(argv[0]);
+		return 0;
 	}
 
 	// main procedure
-	if (target_file_no == 0) {
+	int data_from_stdin = FALSE;
+	if (opt.target_file_no == 0) {
 		// get payload from stdin
 		data_from_stdin = TRUE;
-		target_file_no = argc - 1;
+		opt.target_file_no = argc - 1;
 	}
-	for (i = target_file_no; i < argc; i++) {
-			if (data_from_stdin) {
-				//result = parse_csv(&stdin);
-			} else {
-				//result = open_csv(argv[i]);
-				parse_csv(argv[i]);
-			}
+	int i;
+	for (i = opt.target_file_no; i < argc; i++) {
+		if (data_from_stdin) {
+			//parse_csv(&stdin);
+		} else {
+			parse_csv(argv[i]);
+		}
 	}
 	return 0;
 }
