@@ -1,14 +1,20 @@
-csvwc
+csvparse
 =====
+Parse CSV files and output them as is.
 
-this is csvwc (e.g. like /bin/wc) just for me.
+When the filter mode is specified, replace line breaks in the CSV data with the following strings and output them.
+* LF...`${LF}`
+* CR...`${CR}`
+* CRLF...`${CRLF}`
 
-install
+Installation
 -----
+```
 $ make
+```
 
-
-usage
+Usage
 -----
-$ ./csvwc him.csv him2.csv  
-$ cat him.csv | ./csvwc -l
+```
+$ ./csvparse [--filter] file [file...]
+```
