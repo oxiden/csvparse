@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
 	int i;
 	for (i = opt.target_file_no; i < argc; i++) {
 		if (data_from_stdin) {
+			// TODO: implementation
 			//parse_csv(&stdin);
 		} else {
 			parse_csv(argv[i], opt.options);
